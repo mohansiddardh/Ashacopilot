@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ASHA Copilot 2.0 - Redirecting...</title>
+  <script>
+    // Redirect all paths to index.html for GitHub Pages SPA compatibility
+    var path = window.location.pathname;
+    var repo = '/Ashacopilot/';
+    if (path.indexOf(repo) === 0) {
+      window.location.replace(repo);
+    } else {
+      window.location.replace('./');
+    }
+  </script>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 2rem; background: #0B132B; color: #fff;">
+  <h2>Redirecting to ASHA Copilot 2.0...</h2>
+  <p><a href="./" style="color: #10B981;">Click here if you are not redirected automatically</a></p>
+</body>
+</html>

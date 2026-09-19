@@ -7,6 +7,15 @@
   <meta name="description" content="ASHA Copilot reduces repetitive documentation by transforming one household encounter into multiple structured programme records. Built for Kalachakra 2K26 PS-H02.">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0F766E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ASHA Copilot">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ASHA Copilot 2.0 | National Health Programmes Platform">
+  <meta property="og:description" content="Capture Once. Generate Every Record. Frontline community health documentation and national health programmes transformation engine.">
+  <meta property="og:url" content="https://mohansiddardh.github.io/Ashacopilot/">
 </head>
 <body>
 
@@ -18,9 +27,9 @@
         <div class="brand-titles">
           <div class="brand-title">
             ASHA Copilot
-            <span class="brand-tag-pill">PS-H02 Prototype</span>
+            <span class="brand-tag-pill" style="background: rgba(16, 185, 129, 0.18); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4);"><span style="display:inline-block; width:7px; height:7px; background:#10B981; border-radius:50%; margin-right:5px; box-shadow: 0 0 8px #10B981;"></span>Live Web App</span>
           </div>
-          <div class="brand-subtitle">आशा साथी • ఆశా మిత్ర • One Worker, Five Systems</div>
+          <div class="brand-subtitle">आशा साथी • ఆశా మిత్ర • National Health Programmes Platform</div>
         </div>
       </a>
 
@@ -2798,5 +2807,18 @@
 
   <!-- Application Script Bundle -->
   <script type="module" src="js/app.js"></script>
+
+  <!-- Service Worker Registration for PWA / Web App -->
+  <script>
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('ASHA Copilot Web App Service Worker registered:', reg.scope);
+        }).catch((err) => {
+          console.log('SW registration note:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

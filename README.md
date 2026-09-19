@@ -88,31 +88,38 @@ The worker captures the encounter **ONCE**—either by speaking naturally (in En
 
 ---
 
-## 🚀 How to Run Locally
+## 🌐 Live Website & Access
 
-### Option 1: Python Local Server (Recommended)
+### 1. Instant Access (Production Cloud Web App — No Localhost Required)
+Open the live deployed website directly on any mobile device, tablet, or desktop browser:
+👉 **[https://mohansiddardh.github.io/Ashacopilot/](https://mohansiddardh.github.io/Ashacopilot/)**
+
+- **Zero Setup**: No Python, Node.js, terminal, or localhost server required.
+- **Installable PWA**: Works as a native Progressive Web App. On Chrome/Edge or Mobile Safari, tap **"Install App"** or **"Add to Home Screen"** to run standalone.
+- **Offline-Ready**: Built-in Service Worker caches vital resources for frontline field operation even without cellular data.
+- **Secure Speech APIs**: Runs over HTTPS, unlocking native browser speech recognition in English, Telugu, and Hindi.
+
+---
+
+## 🚀 Alternative Deployment Platforms
+
+The codebase is engineered with 100% static client-side web standards and includes native configurations for multiple cloud hosts:
+
+| Provider | Configuration File | Command / Method |
+| :--- | :--- | :--- |
+| **GitHub Pages** | `.github/workflows/deploy.yml` | Automatic on push to `main` or `gh-pages` |
+| **Vercel** | `vercel.json` | Run `vercel --prod` or link GitHub repo in Vercel dashboard |
+| **Netlify** | `netlify.toml` | Run `netlify deploy --prod` or link GitHub repo in Netlify |
+
+---
+
+## 💻 Local Development (Optional)
+If running offline in a local developer environment:
 ```powershell
 python server.py
 ```
-Open **[http://localhost:8000](http://localhost:8000)** in your browser.
+Open **[http://localhost:8000](http://localhost:8000)** in your browser, or double-click `index.html`.
 
-### Option 2: Direct File Open
-Open `index.html` directly in Chrome, Microsoft Edge, or Firefox.
-
----
-
-## 🌐 Deployment to GitHub Pages
-
-This application is built with vanilla HTML5, modern CSS3, and ES6 modular JavaScript—requiring zero build tools or server dependencies.
-
-To deploy to GitHub Pages:
-1. Push this repository to GitHub (`main` branch).
-2. Go to repository **Settings** → **Pages**.
-3. Under **Build and deployment** → **Source**, select `Deploy from a branch`.
-4. Select `main` branch and `/ (root)` folder, then click **Save**.
-5. Your application will be live at: `https://mohansiddardh.github.io/Ashacopilot/`
-
----
 
 ## 🛡️ Privacy, Safety & Compliance
 
