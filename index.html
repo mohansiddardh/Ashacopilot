@@ -1,0 +1,2802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASHA Copilot 2.0 | Capture Once. Generate Every Record.</title>
+  <meta name="description" content="ASHA Copilot reduces repetitive documentation by transforming one household encounter into multiple structured programme records. Built for Kalachakra 2K26 PS-H02.">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
+</head>
+<body>
+
+  <!-- Top Application Header -->
+  <header class="top-header">
+    <div class="header-inner">
+      <a href="#" class="brand-container" id="brandHomeLink">
+        <div class="brand-logo-badge">🩺</div>
+        <div class="brand-titles">
+          <div class="brand-title">
+            ASHA Copilot
+            <span class="brand-tag-pill">PS-H02 Prototype</span>
+          </div>
+          <div class="brand-subtitle">आशा साथी • ఆశా మిత్ర • One Worker, Five Systems</div>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <!-- Language Selector (i18n: EN, TE, TA, HI) -->
+        <div class="lang-select-box" title="Switch Interface Language (English, Telugu, Tamil, Hindi)">
+          <span style="font-size: 1rem;">🌐</span>
+          <select id="appLanguageSelector" class="header-select">
+            <option value="en">English</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+            <option value="hi">हिंदी (Hindi)</option>
+          </select>
+        </div>
+
+        <!-- ASHA User Account Switcher / Login Trigger -->
+        <button type="button" class="btn-user-session" id="btnUserSessionTrigger" title="Active User Session - Click to Switch ASHA Accounts or Create User">
+          <span id="sessionUserAvatar">👩‍⚕️</span>
+          <span id="sessionUserName">ASHA001 - Sita Rao</span>
+          <span style="font-size: 0.75rem; opacity: 0.7;">▼</span>
+        </button>
+
+        <!-- Role Switcher (RBAC) -->
+        <div class="role-select-box" title="Switch User Role & Access Privileges">
+          <span>👤 Role:</span>
+          <select id="roleSelector">
+            <option value="ASHA">ASHA (Lata Devi - Field Worker)</option>
+            <option value="ANM">ANM (Sarojini Rao - Clinical Supervisor)</option>
+            <option value="ADMIN">Admin (Dr. K. V. Sharma - Medical Officer)</option>
+          </select>
+        </div>
+
+        <!-- Network Simulation Switch -->
+        <button type="button" class="network-status-toggle" id="networkToggleBtn" title="Toggle Simulated Offline/Online Network State">
+          <span class="status-dot" id="networkDot"></span>
+          <span id="networkStatusLabel">Online (Central Sync)</span>
+        </button>
+
+        <!-- 1-Click Fast Demo Button for Judges -->
+        <button type="button" class="btn-demo-quick" id="quickDemoBtn" title="Execute 2-minute demo with synthetic beneficiary Sita">
+          <span>⚡</span> Quick Demo (Sita)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="app-nav-bar" aria-label="Main Navigation">
+    <div class="nav-tabs-inner">
+      <button type="button" class="nav-tab-btn active" data-tab="dashboard">
+        <span>📊</span> Dashboard
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="capture">
+        <span>📝</span> Encounter Capture <span class="tab-badge-count">3 Modes</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="output">
+        <span>📑</span> Generated Schemas <span class="tab-badge-count" id="generatedCountBadge">6</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="family" id="navTabFamily">
+        <span>👨‍👩‍👧‍👦</span> Family Reports <span class="tab-badge-count" style="background: #10B981;">Families</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="diagnostic" id="navTabDiagnostic">
+        <span>🩺</span> Diagnostic Reports <span class="tab-badge-count" style="background: #F59E0B;">Clinical</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="programmes" id="navTabProgrammes">
+        <span>🏛️</span> Health Programmes <span class="tab-badge-count" style="background: #8B5CF6;">47+</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="progress" id="navTabProgress">
+        <span>📈</span> My Progress <span class="tab-badge-count" style="background: #0284C7;">Targets</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="timeline">
+        <span>🕒</span> Household Timeline
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="impact">
+        <span>⚡</span> Before vs After Impact
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="architecture">
+        <span>🏛️</span> System Architecture
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="audit">
+        <span>🛡️</span> Audit & Security
+      </button>
+    </div>
+  </nav>
+
+  <!-- Offline Buffer Alert Banner (Visible only in offline mode) -->
+  <div class="offline-banner hidden" id="offlineAlertBanner">
+    <div style="display: flex; align-items: center; gap: 0.65rem;">
+      <span style="font-size: 1.2rem;">📡</span>
+      <span><strong>Offline Mode Active:</strong> Encounters are safely cached in local browser storage and queued for central sync. (<span id="offlineQueueText">0 pending</span>)</span>
+    </div>
+    <button type="button" class="btn-sync-action" id="triggerManualSyncBtn">Restore & Sync Now</button>
+  </div>
+
+  <!-- Main View Container -->
+  <main class="app-main">
+
+    <!-- ====================================================================
+         VIEW 1: DASHBOARD
+         ==================================================================== -->
+    <section class="tab-view active" id="view-dashboard">
+      <!-- Hero Proposition Card -->
+      <div class="hero-banner">
+        <div class="hero-tag">Kalachakra 2K26 Healthcare PS-H02</div>
+        <h1 class="hero-title">Capture Once. Generate Every Record.</h1>
+        <p class="hero-subtitle">
+          ASHA Copilot reduces repetitive documentation by transforming one frontline household encounter into multiple structured programme records — Maternal Health, Immunisation, and Village Census registers.
+        </p>
+        <div class="hero-actions">
+          <button type="button" class="btn-hero-primary" id="heroVoiceBtn">
+            <span>🎙️</span> Voice Studio (Multilingual)
+          </button>
+          <button type="button" class="btn-hero-secondary" id="heroLiveBtn">
+            <span>⚡</span> Realtime Live Capture
+          </button>
+          <button type="button" class="btn-hero-secondary" id="heroFormBtn">
+            <span>📝</span> Standard Clinical Form
+          </button>
+          <button type="button" class="btn-hero-secondary" id="heroDemoLoadBtn">
+            <span>⚡</span> Load Demo (Sita H001)
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon-box teal">🏠</div>
+          <div class="metric-details">
+            <div class="metric-value" id="metricVisitsCount">12</div>
+            <div class="metric-label">Today's Visits</div>
+            <div class="metric-subtext">Rampur Sub-Centre Cluster</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-box blue">📑</div>
+          <div class="metric-details">
+            <div class="metric-value" id="metricRecordsCount">36</div>
+            <div class="metric-label">Programme Records</div>
+            <div class="metric-subtext">Generated automatically (3x)</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-box green">⏱️</div>
+          <div class="metric-details">
+            <div class="metric-value">~78%</div>
+            <div class="metric-label">Time Saved</div>
+            <div class="metric-subtext">~2.5 hrs saved / worker / day</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-box amber">📡</div>
+          <div class="metric-details">
+            <div class="metric-value" id="metricSyncCount">0</div>
+            <div class="metric-label">Pending Sync</div>
+            <div class="metric-subtext" id="metricSyncStatus">Local Cache In Sync</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Encounters Section -->
+      <div class="section-header-row">
+        <h2 class="section-title">
+          <span>📋</span> Recent Verified Household Encounters
+        </h2>
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+          Showing latest synthetic field encounters
+        </div>
+      </div>
+
+      <div class="encounters-list-container" id="recentEncountersContainer">
+        <!-- Rendered dynamically by JS -->
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 2: ENCOUNTER CAPTURE (3 MODES: FORM, VOICE, LIVE AUTOSAVE)
+         ==================================================================== -->
+    <section class="tab-view" id="view-capture">
+      <!-- Capture Mode Switcher Bar -->
+      <div class="capture-mode-bar">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-weight: 800; font-size: 0.88rem; color: #1E3A8A;">INPUT METHOD:</span>
+          <div class="capture-mode-pills">
+            <button type="button" class="capture-mode-btn" data-mode="form">
+              <span>📝</span> Standard Form
+            </button>
+            <button type="button" class="capture-mode-btn active" data-mode="voice">
+              <span>🎙️</span> Voice Studio ("ASHA Bol")
+            </button>
+            <button type="button" class="capture-mode-btn" data-mode="live">
+              <span>⚡</span> Realtime Live Autosave
+            </button>
+          </div>
+        </div>
+
+        <!-- Realtime Autosave Feedback Badge -->
+        <div class="live-autosave-indicator">
+          <span style="color: var(--text-muted); font-size: 0.8rem;">Autosave Engine:</span>
+          <span class="autosave-pill synced" id="globalAutosaveStatus">☁ Synced</span>
+        </div>
+      </div>
+
+      <!-- SUB-MODE A: VOICE STUDIO ("ASHA BOL") -->
+      <div class="capture-subview active" id="subview-voice">
+        <div class="voice-studio-grid">
+          <!-- Left: Audio Capture & Transcription -->
+          <div class="voice-capture-card">
+            <!-- Language Selector -->
+            <div class="lang-selector-box">
+              <span>🌐 Language:</span>
+              <select id="voiceLangSelect">
+                <option value="en-IN">English (India)</option>
+                <option value="te-IN">తెలుగు (Telugu)</option>
+                <option value="ta-IN">தமிழ் (Tamil)</option>
+                <option value="hi-IN">हिंदी (Hindi)</option>
+              </select>
+            </div>
+
+            <!-- Pre-Recording Verbal Consent & PII Privacy Safeguard (DPDPA 2023 Compliant) -->
+            <div class="voice-consent-guard-banner" id="voiceConsentGuardBox">
+              <div class="voice-consent-guard-inner">
+                <label class="consent-switch" for="voicePreRecordConsentToggle" title="Confirm verbal consent prior to recording audio">
+                  <input type="checkbox" id="voicePreRecordConsentToggle" checked>
+                  <span class="consent-slider round"></span>
+                </label>
+                <div class="voice-consent-guard-text">
+                  <div class="voice-consent-headline">
+                    <span class="voice-consent-shield">🔒</span>
+                    <strong class="voice-consent-title-text">Consent captured before recording</strong>
+                    <span class="voice-consent-legal-pill">DPDPA 2023 Compliant</span>
+                    <span class="voice-consent-synth-pill">Synthetic PII Safeguard</span>
+                  </div>
+                  <div class="voice-consent-subtitle">
+                    Beneficiary verbal consent verified for health register intake. Audio transcribed on-device; no real PII stored.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="voice-mic-container">
+              <button type="button" class="btn-mic-record" id="micRecordBtn" title="Start / Pause Microphone">
+                🎙️
+              </button>
+            </div>
+            <div class="mic-label" id="micStatusTitle">Tap to Speak</div>
+            <div class="mic-hint" id="micStatusHint">Web Speech API enabled. Speak naturally in English, Telugu, Tamil, or Hindi.</div>
+
+            <!-- Animated Audio Wave Simulator -->
+            <div class="audio-visualizer-box" id="audioVisualizer">
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+            </div>
+
+            <!-- Transcript Input Box (Editable) -->
+            <div class="transcript-box">
+              <div class="transcript-label">Spoken Voice Transcript (Persistent Memory)</div>
+              <textarea id="voiceTranscriptInput" style="width: 100%; border: none; background: transparent; resize: vertical; min-height: 80px; font-family: inherit; font-size: 0.95rem; outline: none;" placeholder="Transcript will accumulate here as you speak. You can also edit it or click any sample preset on the right..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; width: 100%;">
+              <button type="button" class="btn-hero-primary" id="btnExtractEntities" style="flex: 1; justify-content: center; background: var(--primary); color: white;">
+                <span>⚡</span> Extract & Structure Information
+              </button>
+              <button type="button" class="btn-inspect-enc" id="btnClearVoice">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Multilingual Hackathon Presets -->
+          <div class="presets-container">
+            <div class="presets-title">
+              <span>💡</span> Live Hackathon Test Presets
+            </div>
+            <div class="presets-desc">
+              Test natural speech in English, Telugu, Tamil, and Hindi with 1 click:
+            </div>
+
+            <div class="preset-card" data-preset="sita">
+              <div class="preset-header">
+                <span class="preset-name">1. Sita (English Maternal + UIP)</span>
+                <span class="preset-badge">Recommended</span>
+              </div>
+              <p class="preset-text">
+                "Sita is 24 years old and five months pregnant. She has one child. The child has received BCG and OPV vaccines. There are no current symptoms."
+              </p>
+            </div>
+
+            <div class="preset-card" data-preset="sindhu">
+              <div class="preset-header">
+                <span class="preset-name">2. Sindhu (User Voice Sample)</span>
+                <span class="preset-badge" style="background: #FEF3C7; color: #92400E;">Verified Fix</span>
+              </div>
+              <p class="preset-text">
+                "sinduism 22 years old and 14 weeks pregnant. Previous pregnancy 1. Experiencing morning sickness and cough."
+              </p>
+            </div>
+
+            <div class="preset-card" data-preset="telugu-radha">
+              <div class="preset-header">
+                <span class="preset-name">3. రాధా దేవి (Telugu Script)</span>
+                <span class="preset-badge" style="background: #E0E7FF; color: #3730A3;">తెలుగు / Telugu</span>
+              </div>
+              <p class="preset-text">
+                "రాధా దేవి వయస్సు 29 సంవత్సరాలు, గర్భవతి కాదు. ఇద్దరు పిల్లలు ఉన్నారు. చిన్న పాపకు పెంటావాలెంట్ మరియు రోటావైరస్ టీకాలు వేయించాము. కొద్దిగా దగ్గు ఉంది, వచ్చే మంగళవారం మళ్లీ చూడాలి."
+              </p>
+            </div>
+
+            <div class="preset-card" data-preset="hindi-pooja">
+              <div class="preset-header">
+                <span class="preset-name">4. पूजा (Hindi Script)</span>
+                <span class="preset-badge" style="background: #FCE7F3; color: #9D174D;">हिंदी / Hindi</span>
+              </div>
+              <p class="preset-text">
+                "पूजा की उम्र 21 साल है, चौदह हफ़्ते की गर्भवती है। पहली गर्भावस्था है, कोई पिछला बच्चा नहीं है। सुबह उल्टी और कमजोरी की शिकायत है, फॉलो अप आवश्यक है।"
+              </p>
+            </div>
+
+            <div class="preset-card" data-preset="tamil-anitha">
+              <div class="preset-header">
+                <span class="preset-name">5. அனிதா (Tamil Script)</span>
+                <span class="preset-badge" style="background: #FEF08A; color: #854D0E;">தமிழ் / Tamil</span>
+              </div>
+              <p class="preset-text">
+                "அனிதா வயது 25 ஆண்டுகள், 16 வார கர்ப்பிணி. ஒரு குழந்தை உள்ளது. குழந்தைக்கு பிசிஜி மற்றும் ஓபிவி தடுப்பூசி போடப்பட்டுள்ளது. லேசான தலைவலி உள்ளது, அடுத்த மாதம் பரிசோதனை."
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extraction Confirmation Review Card -->
+        <div class="confirmation-review-container" id="extractionReviewCard" style="display: none;">
+          <div class="confirmation-header">
+            <div class="confirmation-title">
+              <span>✅</span> AI Extracted Information — Please Confirm Before Saving
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+              Verify or adjust any extracted fields below
+            </span>
+          </div>
+
+          <div id="voiceConsistencyAlertContainer"></div>
+
+          <div class="review-grid">
+            <div class="review-field-card">
+              <div class="review-label">Household Profile ID</div>
+              <input type="text" class="review-input" id="revHouseholdId" value="H001" placeholder="e.g. H001">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Beneficiary Name</div>
+              <input type="text" class="review-input" id="revName" value="Sita">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Age (Years)</div>
+              <input type="number" class="review-input" id="revAge" value="24">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Pregnant Status</div>
+              <select class="review-input" id="revPregnant">
+                <option value="true">YES - Pregnant</option>
+                <option value="false">NO - Not Pregnant</option>
+              </select>
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Gestational Age (Weeks)</div>
+              <input type="number" class="review-input" id="revGestation" value="20">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Number of Children</div>
+              <input type="number" class="review-input" id="revChildren" value="1">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Child Vaccinations</div>
+              <input type="text" class="review-input" id="revVaccines" value="BCG, OPV-0, OPV-1">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Reported Symptoms</div>
+              <input type="text" class="review-input" id="revSymptoms" value="None">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Vitals (BP / Temp / SpO2)</div>
+              <input type="text" class="review-input" id="revVitals" value="BP 118/76, 98.4°F, 98%">
+            </div>
+
+            <div class="review-field-card">
+              <div class="review-label">Follow-up Required?</div>
+              <select class="review-input" id="revFollowUp">
+                <option value="false">NO - Routine Visit</option>
+                <option value="true">YES - Priority Revisit</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Synthetic Consent Box -->
+          <div class="consent-box" style="margin-top: 0.5rem; margin-bottom: 1.25rem;">
+            <div class="consent-header">
+              <span>🛡️</span> Patient Information Consent (Demo / Synthetic)
+            </div>
+            <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
+              <input type="checkbox" id="voiceConsentCheckbox" checked>
+              <span>Person has provided verbal consent for healthcare documentation into community registers.</span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center;">
+            <button type="button" class="btn-inspect-enc" id="btnEditExtracted">
+              ✏️ Edit Fields
+            </button>
+            <button type="button" class="btn-hero-primary" id="btnConfirmExtracted" style="background: var(--primary); color: white;">
+              <span>💾</span> CONFIRM & GENERATE ALL 3 SCHEMAS
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-MODE B: STANDARD CLINICAL FORM MODE -->
+      <div class="capture-subview" id="subview-form" style="display: none;">
+        <div class="form-container-card">
+          <div class="section-header-row">
+            <div>
+              <h2 class="section-title"><span>📝</span> Standard Household Clinical Form</h2>
+              <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+                Accessible mobile form with large touch targets for community health surveillance.
+              </p>
+            </div>
+            <button type="button" class="btn-inspect-enc" id="formLoadSampleBtn">
+              Load Sample (Sita)
+            </button>
+          </div>
+
+          <form id="encounterCaptureForm" onsubmit="return false;">
+            <!-- 1. Person & Location Details -->
+            <div class="form-section-title">👤 Person & Demographics</div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="formHouseholdId">Household ID (Family Code)</label>
+                <input type="text" class="form-control" id="formHouseholdId" value="H001">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formPersonName">Person / Beneficiary Name *</label>
+                <input type="text" class="form-control" id="formPersonName" required placeholder="e.g. Sita, Sindhu, Radha">
+              </div>
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label class="form-label" for="formAge">Age (Years) *</label>
+                <input type="number" class="form-control" id="formAge" min="1" max="115" placeholder="e.g. 24" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formGender">Gender</label>
+                <select class="form-control" id="formGender">
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formPhone">Contact Phone (Synthetic)</label>
+                <input type="text" class="form-control" id="formPhone" value="9848012345 (Synthetic)">
+              </div>
+            </div>
+
+            <!-- 2. Household Demographics -->
+            <div class="form-section-title">🏠 Household Composition</div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label class="form-label" for="formHouseholdMembers">Total Family Members</label>
+                <input type="number" class="form-control" id="formHouseholdMembers" value="4" min="1">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formChildrenCount">Children Count (&lt;5 yrs)</label>
+                <input type="number" class="form-control" id="formChildrenCount" value="0" min="0">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formElderlyCount">Elderly Members (&gt;60 yrs)</label>
+                <input type="number" class="form-control" id="formElderlyCount" value="1" min="0">
+              </div>
+            </div>
+
+            <!-- 3. Maternal Health -->
+            <div class="form-section-title">🤰 Maternal Health (ANC & Gestation)</div>
+            <div style="background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.25rem;">
+              <div class="form-grid-3" style="align-items: center;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Pregnancy Status</label>
+                  <div class="toggle-switch-group">
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="formIsPregnant">
+                      <span class="slider"></span>
+                    </label>
+                    <span id="pregnantToggleLabel" style="font-weight: 700; font-size: 0.9rem;">No (Not Pregnant)</span>
+                  </div>
+                </div>
+
+                <div class="form-group" id="gestationalGroup" style="margin-bottom: 0; opacity: 0.5; pointer-events: none;">
+                  <label class="form-label" for="formGestationalWeeks">Gestational Age (Weeks)</label>
+                  <input type="number" class="form-control" id="formGestationalWeeks" min="1" max="42" placeholder="e.g. 20">
+                </div>
+
+                <div class="form-group" id="gravidaGroup" style="margin-bottom: 0; opacity: 0.5; pointer-events: none;">
+                  <label class="form-label" for="formGravida">Gravida (Total Pregnancies)</label>
+                  <input type="number" class="form-control" id="formGravida" min="1" value="1">
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Child Health & Immunisation -->
+            <div class="form-section-title">👶 Child Health & Immunisation</div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="formChildName">Child Name (if applicable)</label>
+                <input type="text" class="form-control" id="formChildName" placeholder="e.g. Aarav, Rohan">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formChildAge">Child Age</label>
+                <input type="text" class="form-control" id="formChildAge" placeholder="e.g. 9 months, 1.5 years">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Child Vaccinations Administered</label>
+              <div class="pills-catalog" id="vaccinesPillsCatalog"></div>
+            </div>
+
+            <!-- 5. General Observations & Vitals -->
+            <div class="form-section-title">🩺 Observations & Vitals</div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label class="form-label" for="formBp">Blood Pressure</label>
+                <input type="text" class="form-control" id="formBp" value="120/80">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formTemp">Temperature (°F)</label>
+                <input type="number" step="0.1" class="form-control" id="formTemp" value="98.4">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formSpo2">SpO2 (%)</label>
+                <input type="number" class="form-control" id="formSpo2" value="98" min="50" max="100">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Reported Symptoms / Danger Signs</label>
+              <div class="pills-catalog" id="symptomsPillsCatalog"></div>
+            </div>
+
+            <!-- Follow-up & Notes -->
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Follow-up Revisit Mandated?</label>
+                <div class="toggle-switch-group">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="formFollowUp">
+                    <span class="slider"></span>
+                  </label>
+                  <span id="followUpToggleLabel" style="font-weight: 700; font-size: 0.9rem;">No - Routine Visit</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="formNotes">Field Notes / Observations</label>
+                <input type="text" class="form-control" id="formNotes" placeholder="e.g. Normal recovery, dietary counseling provided">
+              </div>
+            </div>
+
+            <!-- Synthetic Consent Box -->
+            <div class="consent-box">
+              <div class="consent-header">
+                <span>🛡️</span> Patient Information Consent (Demo / Synthetic)
+              </div>
+              <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
+                <input type="checkbox" id="formConsentCheckbox" checked>
+                <span>Beneficiary verbal consent recorded for community registry documentation.</span>
+              </label>
+            </div>
+
+            <!-- Live Consistency Warnings -->
+            <div id="formConsistencyAlertContainer"></div>
+
+            <!-- Safety / Verification Stage & Supporting Document Upload (Requirement 2 & 3) -->
+            <div class="verification-stage-card" id="formVerificationCard">
+              <div class="verification-stage-header">
+                <div class="verif-title-group">
+                  <span style="font-size: 1.4rem;">🛡️</span>
+                  <div>
+                    <h4 style="margin: 0; font-size: 0.96rem; font-weight: 800; color: var(--text-main);">Clinical Verification & Supporting Documents Stage</h4>
+                    <p style="margin: 0; font-size: 0.78rem; color: var(--text-muted);">Verify clinical observation checklist & attach supporting laboratory / diagnostic reports.</p>
+                  </div>
+                </div>
+                <span class="brand-tag-pill" style="background: #E0E7FF; color: #3730A3;">Safety Stage</span>
+              </div>
+
+              <!-- Verification Checklist -->
+              <div class="verif-checklist-grid">
+                <div class="verif-check-item">
+                  <span class="check-icon">✓</span>
+                  <div>
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Basic Information</strong>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">Name, Age, Household ID, Contact</div>
+                  </div>
+                </div>
+                <div class="verif-check-item">
+                  <span class="check-icon">✓</span>
+                  <div>
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Health Information</strong>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">Pregnancy status, Gestation, Vaccines</div>
+                  </div>
+                </div>
+                <div class="verif-check-item">
+                  <span class="check-icon">✓</span>
+                  <div>
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Measurements & Vitals</strong>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">BP, Temp, SpO2 verified</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Supporting Document Upload Section -->
+              <div class="doc-upload-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-medium);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <span style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+                    📎 Supporting Verification Documents (Proof / Clinical Reports):
+                  </span>
+                  <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <label for="formDocCategory" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Document Type:</label>
+                    <select id="formDocCategory" class="profile-select-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.82rem;">
+                      <option value="Pregnancy Report">Pregnancy Report</option>
+                      <option value="Blood Test">Blood Test Report</option>
+                      <option value="Urine Test">Urine Test Report</option>
+                      <option value="Doctor Consultation">Doctor Consultation Report</option>
+                      <option value="Diagnostic Report">Diagnostic Report</option>
+                      <option value="Prescription">Prescription</option>
+                      <option value="Other">Other Clinical Document</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                  <input type="file" id="formUploadFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+                  <button type="button" class="btn-inspect-enc" id="btnTriggerDocUpload" style="border-color: var(--primary); color: var(--primary); font-weight: 700;">
+                    <span>📁</span> + UPLOAD FILE
+                  </button>
+                  <span id="formUploadFileLabel" style="font-size: 0.82rem; color: var(--text-muted);">Supported: PDF, JPG, JPEG, PNG (Saved locally to Person Health Profile)</span>
+                </div>
+
+                <!-- Attached Files List -->
+                <div id="formAttachedFilesList" style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+              <button type="reset" class="btn-inspect-enc" id="btnResetForm">Clear Form</button>
+              <button type="button" class="btn-hero-primary" id="btnSubmitForm" style="background: var(--primary); color: white;">
+                <span>⚡</span> Process & Generate 3 Programme Schemas
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- SUB-MODE C: LIVE / REALTIME CAPTURE MODE (Per-field Autosave) -->
+      <div class="capture-subview" id="subview-live" style="display: none;">
+        <div class="form-container-card">
+          <div class="section-header-row">
+            <div>
+              <h2 class="section-title"><span>⚡</span> Live Realtime Autosave Capture</h2>
+              <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+                Realtime keystroke-buffered autosave. Records are persisted instantaneously as you type without waiting for form completion.
+              </p>
+            </div>
+            <button type="button" class="btn-inspect-enc" id="btnLiveLoadSindhu">
+              Load Sindhu Encounter
+            </button>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1.5px solid var(--border-medium); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+              <span id="liveHouseholdHeading">HOUSEHOLD RECORD (H001)</span>
+              <span id="liveRealtimeBadge" class="autosave-pill synced">☁ Synced</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Household Profile ID</span>
+                <span class="field-autosave-badge" id="badgeLiveHouseholdId">✓ Saved</span>
+              </label>
+              <input type="text" class="form-control live-field" id="liveHouseholdId" value="H001" placeholder="e.g. H001, H003, H042">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Beneficiary Name</span>
+                <span class="field-autosave-badge" id="badgeLiveName">✓ Saved</span>
+              </label>
+              <input type="text" class="form-control live-field" id="liveName" value="Sita" placeholder="e.g. Sita">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Age (Years)</span>
+                <span class="field-autosave-badge" id="badgeLiveAge">✓ Saved</span>
+              </label>
+              <input type="number" class="form-control live-field" id="liveAge" value="24" placeholder="e.g. 24">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Pregnancy Status</span>
+                <span class="field-autosave-badge" id="badgeLivePreg">✓ Saved</span>
+              </label>
+              <select class="form-control live-field" id="livePreg">
+                <option value="true">Yes - Pregnant</option>
+                <option value="false">No - Not Pregnant</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Gestational Age</span>
+                <span class="field-autosave-badge" id="badgeLiveGestation">✓ Saved</span>
+              </label>
+              <input type="text" class="form-control live-field" id="liveGestation" value="20 weeks" placeholder="e.g. 20 weeks">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Child Vaccinations</span>
+                <span class="field-autosave-badge" id="badgeLiveVaccines">✓ Saved</span>
+              </label>
+              <input type="text" class="form-control live-field" id="liveVaccines" value="BCG, OPV-0, OPV-1" placeholder="e.g. BCG, OPV">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Clinical Symptoms / Observations</span>
+                <span class="field-autosave-badge" id="badgeLiveSymptoms">✓ Saved</span>
+              </label>
+              <input type="text" class="form-control live-field" id="liveSymptoms" value="None" placeholder="e.g. None, Cough, Morning Sickness">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">
+              All live entries are saved locally in realtime.
+            </span>
+            <button type="button" class="btn-hero-primary" id="btnFinalizeLive" style="background: var(--primary); color: white;">
+              <span>⚡</span> Finalize & Generate 3 Programme Schemas
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 3: PROGRAMME OUTPUT SCREEN & MULTI-SCHEMA INSPECTOR
+         ==================================================================== -->
+    <section class="tab-view" id="view-output">
+      <!-- Confirmation Banner -->
+      <div class="output-hero-card">
+        <div>
+          <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.06em; opacity: 0.8; margin-bottom: 0.4rem;">
+            Schema Mapping Engine Completed
+          </div>
+          <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.4rem;" id="outputEncounterTitle">
+            Household Encounter: Sita (H001)
+          </h2>
+          <div style="font-size: 0.88rem; opacity: 0.9;">
+            Normalized into Common Data Model (CDM) and mapped into 5 programme registers simultaneously ("One Worker, Five Systems").
+          </div>
+        </div>
+
+        <div class="output-status-badges">
+          <span class="status-check-pill">✓ Maternal Health</span>
+          <span class="status-check-pill">✓ Immunisation</span>
+          <span class="status-check-pill">✓ Household Census</span>
+          <span class="status-check-pill">✓ Diagnostic Check-up</span>
+          <span class="status-check-pill">✓ Health Supplies</span>
+          <span class="status-check-pill">✓ Public Health Schemes</span>
+        </div>
+      </div>
+
+      <!-- View Toggle & Schema Tabs -->
+      <div class="view-toggle-bar">
+        <div class="schema-tabs-bar" style="margin-bottom: 0;">
+          <button type="button" class="schema-tab-btn active" data-schema="maternal">
+            <span>🤰</span> Maternal Health (Schema A)
+          </button>
+          <button type="button" class="schema-tab-btn" data-schema="immunisation">
+            <span>💉</span> Child Immunisation (Schema B)
+          </button>
+          <button type="button" class="schema-tab-btn" data-schema="household">
+            <span>🏠</span> Household Register (Schema C)
+          </button>
+          <button type="button" class="schema-tab-btn" data-schema="diagnostic">
+            <span>🩺</span> Diagnostic Register (Schema D)
+          </button>
+          <button type="button" class="schema-tab-btn" data-schema="supplies">
+            <span>📦</span> Health Supplies (Schema E)
+          </button>
+          <button type="button" class="schema-tab-btn" data-schema="programme_reporting">
+            <span>🏛️</span> Public Health Schemes (Schema F)
+          </button>
+          <button type="button" class="schema-tab-btn" data-schema="cdm">
+            <span>🧬</span> Common Data Model (CDM Source)
+          </button>
+        </div>
+
+        <div class="btn-toggle-group">
+          <button type="button" class="btn-toggle-item active" id="viewModeCardBtn">📋 Human Card</button>
+          <button type="button" class="btn-toggle-item" id="viewModeJsonBtn">💻 Structured JSON</button>
+        </div>
+      </div>
+
+      <!-- Active Schema Content Container -->
+      <div id="schemaDisplayContainer">
+        <div class="schema-display-card" id="schemaCardView">
+          <div class="schema-badge-header">
+            <div class="schema-title-group">
+              <div class="schema-full-name" id="dispSchemaTitle">Maternal & Child Health (MCH) Register</div>
+              <div class="schema-code-badge" id="dispSchemaCode">DEMO-PROG-MCH-01</div>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;" id="dispSchemaDesc">
+              Antenatal care & gestational surveillance register.
+            </div>
+          </div>
+
+          <table class="fields-table">
+            <thead>
+              <tr>
+                <th style="width: 35%;">Programme Field Key</th>
+                <th>Transformed Value</th>
+                <th style="width: 25%;">Mapping Origin</th>
+              </tr>
+            </thead>
+            <tbody id="dispFieldsTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="json-container" id="schemaJsonView" style="display: none;">
+          <button type="button" class="btn-copy-json" id="btnCopyJson">📋 Copy JSON</button>
+          <pre><code id="dispJsonCode">// Structured JSON will render here</code></pre>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="font-size: 0.82rem; color: var(--text-muted);">
+          ⚠️ Clearly labeled as Demo Programme Schema for Kalachakra 2K26 PS-H02 prototype.
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn-delete-enc" id="btnDeleteCurrentOutputRecord">
+            🗑️ Delete This Record
+          </button>
+          <button type="button" class="btn-inspect-enc" id="btnDownloadAllJson">
+            📥 Download All Schemas (.json)
+          </button>
+          <button type="button" class="btn-hero-primary" id="btnNewEncounterFromOutput" style="background: var(--primary); color: white; padding: 0.55rem 1.2rem;">
+            + Next Household Encounter
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW: FAMILY REPORTS & HOUSEHOLD SURVEILLANCE
+         ==================================================================== -->
+    <section class="tab-view" id="view-family">
+      <div class="diagnostic-container">
+        <!-- Main Family Header -->
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title"><span>👨‍👩‍👧‍👦</span> Family Reports & Household Surveillance</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+              Family-level census, member rosters, government scheme eligibility, essential health supplies, and vital event reporting.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn-hero-primary" id="btnOpenRegisterFamilyModal" style="background: var(--primary); color: white; padding: 0.5rem 1.1rem; font-size: 0.88rem;">
+              <span>➕</span> Register New Family
+            </button>
+            <button type="button" class="btn-inspect-enc" id="btnRefreshFamilyView">
+              ↻ Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Family Sub-View 1: Family Cards List View -->
+        <div id="familyListContainer">
+          <!-- Search Control Bar -->
+          <div class="person-search-bar-card" style="margin-bottom: 1.25rem;">
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex: 1; flex-wrap: wrap;">
+              <label for="familySearchInput" style="font-weight: 800; font-size: 0.9rem; color: var(--text-main); white-space: nowrap;">
+                <span>🔍 Search Families:</span>
+              </label>
+              <input type="text" id="familySearchInput" class="form-control" placeholder="Search by Family Head, House No (e.g. H-042), or Family ID (e.g. F042)..." style="flex: 1; min-width: 260px;">
+            </div>
+          </div>
+
+          <!-- Filter Pills (Requirement 2) -->
+          <div class="family-filter-pills-bar" id="familyFilterGroup" style="margin-bottom: 1.25rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn-filter-pill active" data-filter="ALL">All Families</button>
+            <button type="button" class="btn-filter-pill" data-filter="COMPLETED">✓ Completed</button>
+            <button type="button" class="btn-filter-pill" data-filter="IN_PROGRESS">🟡 In Progress</button>
+            <button type="button" class="btn-filter-pill" data-filter="FOLLOW_UP_REQUIRED">🟠 Follow-up Due</button>
+            <button type="button" class="btn-filter-pill" data-filter="SCHEMES">📑 Scheme Eligible</button>
+            <button type="button" class="btn-filter-pill" data-filter="SUPPLIES">📦 Health Supply Required</button>
+          </div>
+
+          <!-- Grid of Family Cards -->
+          <div class="family-cards-grid" id="familyCardsGrid">
+            <!-- Dynamically populated by FamilyManager -->
+          </div>
+        </div>
+
+        <!-- Family Sub-View 2: Detailed Family Report View (hidden by default) -->
+        <div id="familyDetailContainer" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button type="button" class="btn-inspect-enc" id="btnBackToFamilyList" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700;">
+              ← Back to All Families
+            </button>
+          </div>
+
+          <!-- Dynamic Family Detail Content -->
+          <div id="familyDetailContentArea">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW: DIAGNOSTIC REPORTS & PERSON HEALTH PROFILE (Requirements 8-15)
+         ==================================================================== -->
+    <section class="tab-view" id="view-diagnostic">
+      <div class="diagnostic-container">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title"><span>🩺</span> Person Health Profile & Diagnostic Reports</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+              Longitudinal clinical surveillance, local document storage, follow-up monitoring, and physician verification.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <button type="button" class="btn-inspect-enc" id="btnRefreshDiagnosticView">
+              ↻ Refresh Profile
+            </button>
+          </div>
+        </div>
+
+        <!-- Person Search & Selection Control Bar -->
+        <div class="person-search-bar-card">
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex: 1; flex-wrap: wrap;">
+            <label for="personSearchInput" style="font-weight: 800; font-size: 0.9rem; color: var(--text-main); white-space: nowrap;">
+              <span>🔍 Search Person:</span>
+            </label>
+            <input type="text" id="personSearchInput" class="form-control" placeholder="Search by Beneficiary Name, Person ID (e.g. P-SIT-101), or Household (e.g. H001)..." style="flex: 1; min-width: 260px;">
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+            <label for="quickPersonSelect" style="font-weight: 700; font-size: 0.82rem; color: var(--text-muted);">Registered Beneficiaries:</label>
+            <select id="quickPersonSelect" class="profile-select-control" style="min-width: 220px;">
+              <!-- Populated dynamically -->
+            </select>
+            <button type="button" class="btn-hero-primary" id="btnOpenPersonProfile" style="background: var(--primary); color: white; padding: 0.45rem 1.1rem; font-size: 0.88rem;">
+              OPEN PROFILE
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Person Profile Content Area -->
+        <div id="personProfileContentArea">
+          <!-- Populated by diagnostic-profile.js -->
+        </div>
+
+        <!-- Large Bottom + ADD Button (Requirement 10) -->
+        <div class="profile-add-action-bar">
+          <button type="button" class="btn-hero-add-profile" id="btnTriggerAddAction">
+            <span>➕</span> + ADD TO HEALTH PROFILE
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW: HEALTH PROGRAMMES & SCHEMES (47+ Public Health Programmes)
+         ==================================================================== -->
+    <section class="tab-view" id="view-programmes">
+      <div class="diagnostic-container">
+        <!-- Main Header -->
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title"><span>🏛️</span> National Health Programmes & Schemes Directory</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+              47+ Standard Indian public health missions organized into 9 categories. Link programmes to families and beneficiaries with non-diagnostic tracking.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn-hero-primary" id="btnAdminAddProgramme" style="background: #8B5CF6; color: white; padding: 0.5rem 1.1rem; font-size: 0.88rem; display: none;">
+              <span>➕</span> Admin: Manage Programmes
+            </button>
+            <button type="button" class="btn-inspect-enc" id="btnRefreshProgrammesView">
+              ↻ Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Safety Notice Banner -->
+        <div class="diagnostic-warning-banner" style="margin-bottom: 1.25rem; background: #EEF2FF; border-color: #C7D2FE;">
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <span style="font-size: 1.3rem;">ℹ️</span>
+            <div>
+              <strong style="color: #3730A3;">Frontline Programme Workflow & Documentation System:</strong>
+              <div style="font-size: 0.84rem; color: #4338CA; margin-top: 0.2rem;">
+                Eligibility statuses (<strong>Reported</strong>, <strong>Under Review</strong>, <strong>Verified</strong>) reflect administrative frontline documentation. Official benefit sanction is subject to competent government authority review.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Programme Overview KPI Dashboard -->
+        <div class="programme-kpi-grid" id="programmeKpiGrid">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Search & Category Filters -->
+        <div class="person-search-bar-card" style="margin-bottom: 1rem;">
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex: 1; flex-wrap: wrap;">
+            <label for="programmeSearchInput" style="font-weight: 800; font-size: 0.9rem; color: var(--text-main); white-space: nowrap;">
+              <span>🔍 Search Programme:</span>
+            </label>
+            <input type="text" id="programmeSearchInput" class="form-control" placeholder="Search by name, abbreviation (e.g. PMMVY, UIP, NTEP), or keyword ('pregnancy', 'TB', 'child', 'hypertension')..." style="flex: 1; min-width: 280px;">
+          </div>
+        </div>
+
+        <!-- 9 Category Filter Pills -->
+        <div class="programme-category-pills-bar" id="programmeCategoryFilters" style="margin-bottom: 1.25rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Programme Cards Grid -->
+        <div class="programmes-cards-grid" id="programmesCardsGrid">
+          <!-- Dynamically populated by programmeManager -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW: ASHA WORKLOAD TARGETS & MY PROGRESS (Requirements 14-16)
+         ==================================================================== -->
+    <section class="tab-view" id="view-progress">
+      <div class="diagnostic-container">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title"><span>📈</span> Frontline Workload & Household Target Progress</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+              Real-time household coverage tracking, supervisor targets, completion milestones, and surveillance activity audit.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn-inspect-enc" id="btnOpenEditTargetModal" style="font-weight: 700;">
+              <span>✏️</span> Edit Target
+            </button>
+            <button type="button" class="btn-hero-primary" id="btnOpenAssignFamilyModal" style="background: var(--primary); color: white; padding: 0.45rem 1.1rem; font-size: 0.88rem;">
+              <span>👥</span> Assign Family
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Content Area for Progress Page -->
+        <div id="progressContentArea">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 4: HOUSEHOLD ENCOUNTER TIMELINE (MULTI-PROFILE)
+         ==================================================================== -->
+    <section class="tab-view" id="view-timeline">
+      <div class="timeline-container">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title"><span>🕒</span> Household Longitudinal Timeline</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+              Sequential visit history and past registers saved according to family profiles. Automatically updates with every new registration.
+            </p>
+          </div>
+          <button type="button" class="btn-inspect-enc" id="btnRefreshTimeline">
+            Refresh Timeline
+          </button>
+        </div>
+
+        <!-- Dynamic Household Profile Selector Bar -->
+        <div class="timeline-profile-bar">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <label for="timelineHouseholdSelect" style="font-weight: 800; font-size: 0.9rem; color: var(--text-main);">
+              <span>🔍 Select Household Profile:</span>
+            </label>
+            <select id="timelineHouseholdSelect" class="profile-select-control">
+              <option value="ALL">Show All Registered Profiles (Cluster Overview)</option>
+              <!-- Populated dynamically with every new profile registered -->
+            </select>
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <button type="button" class="btn-inspect-enc" id="btnTimelineNewVisit">
+              + New Encounter for Profile
+            </button>
+            <button type="button" class="btn-delete-profile" id="btnDeleteSelectedProfile" style="display: none;">
+              🗑️ Delete Profile Registration
+            </button>
+          </div>
+        </div>
+
+        <!-- Profile Demographic Summary Card (shown when a specific profile is selected) -->
+        <div class="profile-summary-header" id="timelineProfileSummaryCard" style="display: none;">
+          <div class="profile-summary-meta">
+            <div class="profile-summary-title">
+              <span id="profHeadIcon">🏠</span>
+              <span id="profHeadName">Sita (Household H001)</span>
+              <span class="brand-tag-pill" id="profHeadStatus">Pregnant (20w)</span>
+            </div>
+            <div class="profile-summary-details" id="profHeadDetails">
+              Age: 24 yrs • Female • Address: House #4-12, Sector 4B • Phone: 9848012345 (Synthetic) • 3 Past Visits Recorded
+            </div>
+          </div>
+          <div>
+            <button type="button" class="btn-delete-profile" id="btnDeleteCurrentProfileBtn">
+              🗑️ Delete Profile Registration
+            </button>
+          </div>
+        </div>
+
+        <!-- Longitudinal Events List -->
+        <div class="timeline-list" id="householdTimelineContainer">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 5: BEFORE VS AFTER DEMONSTRATION & IMPACT CALCULATOR
+         ==================================================================== -->
+    <section class="tab-view" id="view-impact">
+      <div class="section-header-row">
+        <div>
+          <h2 class="section-title"><span>⚡</span> Impact Measurement: Legacy vs ASHA Copilot</h2>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+            Side-by-side demonstration of documentation reduction for Problem Statement PS-H02 "One Worker, Five Systems".
+          </p>
+        </div>
+      </div>
+
+      <div class="impact-comparison-grid">
+        <!-- Legacy Simulated Workflow -->
+        <div class="impact-card legacy">
+          <span class="impact-badge-tag">Current Simulated Workflow</span>
+          <h3 class="impact-card-title">Fragmented Multi-Register Entry</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            ASHA visits 1 household and writes the same name, age, and pregnancy details into 3 separate paper registers and disconnected portals.
+          </p>
+
+          <ul class="workflow-steps-list">
+            <li class="workflow-step-item">
+              <span class="step-bullet">1.</span>
+              <span><strong>Maternal ANC Register:</strong> Writes Mother name, age, gestation, LMP date, high risk notes.</span>
+            </li>
+            <li class="workflow-step-item">
+              <span class="step-bullet">2.</span>
+              <span><strong>Child Immunisation Register:</strong> Re-enters Mother name, child details, vaccines, next due dates.</span>
+            </li>
+            <li class="workflow-step-item">
+              <span class="step-bullet">3.</span>
+              <span><strong>Village Census Survey:</strong> Re-enters Household ID, family head, pregnancy status, child count.</span>
+            </li>
+            <li class="workflow-step-item">
+              <span class="step-bullet">4.</span>
+              <span><strong>Data Contradictions:</strong> Discrepancies in spelling, dates, or age between physical books.</span>
+            </li>
+          </ul>
+
+          <div class="stats-highlight-row">
+            <div class="stat-highlight-item">
+              <div class="stat-highlight-num">~24</div>
+              <div class="stat-highlight-lbl">Fields Typed / Written</div>
+            </div>
+            <div class="stat-highlight-item">
+              <div class="stat-highlight-num">18 mins</div>
+              <div class="stat-highlight-lbl">Documentation / Visit</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ASHA Copilot Workflow -->
+        <div class="impact-card copilot">
+          <span class="impact-badge-tag">ASHA Copilot Workflow</span>
+          <h3 class="impact-card-title">Single Capture → Multi-Mapping</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Encounter captured once via speech or simple UI. Normalized into Common Data Model and mapped to all registers automatically.
+          </p>
+
+          <ul class="workflow-steps-list">
+            <li class="workflow-step-item">
+              <span class="step-bullet">✓</span>
+              <span><strong>One Voice / UI Input:</strong> Spoken once in English, Telugu, or Hindi.</span>
+            </li>
+            <li class="workflow-step-item">
+              <span class="step-bullet">✓</span>
+              <span><strong>Entity Extraction:</strong> Instant extraction into normalized Common Data Model (CDM).</span>
+            </li>
+            <li class="workflow-step-item">
+              <span class="step-bullet">✓</span>
+              <span><strong>Schema Transformation:</strong> Generates Maternal, Immunisation, and Household registers simultaneously.</span>
+            </li>
+            <li class="workflow-step-item">
+              <span class="step-bullet">✓</span>
+              <span><strong>Zero Contradictions:</strong> Single source-of-truth guarantees 100% data consistency.</span>
+            </li>
+          </ul>
+
+          <div class="stats-highlight-row">
+            <div class="stat-highlight-item">
+              <div class="stat-highlight-num">~8</div>
+              <div class="stat-highlight-lbl">Fields Captured (1x)</div>
+            </div>
+            <div class="stat-highlight-item">
+              <div class="stat-highlight-num">3.5 mins</div>
+              <div class="stat-highlight-lbl">Time / Encounter</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Savings Calculator -->
+      <div class="calculator-box">
+        <div class="section-header-row" style="margin-bottom: 1rem;">
+          <div>
+            <h3 style="font-size: 1.2rem; font-weight: 800;">🧮 Interactive Field Savings Calculator</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Prototype Measurement Model for Primary Health Sub-Centres</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div>
+            <div class="calc-slider-group">
+              <div class="calc-slider-header">
+                <span>Daily Household Visits per ASHA:</span>
+                <span id="sliderVisitsVal" style="color: var(--primary); font-size: 1.1rem;">15 visits</span>
+              </div>
+              <input type="range" class="calc-slider" id="sliderVisits" min="5" max="30" value="15">
+            </div>
+
+            <div class="calc-slider-group">
+              <div class="calc-slider-header">
+                <span>ASHAs in Sub-Centre Cluster:</span>
+                <span id="sliderAshasVal" style="color: var(--secondary); font-size: 1.1rem;">10 workers</span>
+              </div>
+              <input type="range" class="calc-slider" id="sliderAshas" min="1" max="50" value="10">
+            </div>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1.5px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1.5rem; display: flex; flex-direction: column; justify-content: center; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.6rem;">
+              <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Time Saved Weekly (Cluster):</span>
+              <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent-emerald);" id="calcHoursSaved">181 Hours</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.6rem;">
+              <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Duplicate Entries Eliminated / Mo:</span>
+              <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);" id="calcEntriesEliminated">72,000 Fields</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Efficiency Boost:</span>
+              <span style="font-size: 1.5rem; font-weight: 800; color: #4338CA;">4.2x Faster</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 6: INTERACTIVE ARCHITECTURE DIAGRAM
+         ==================================================================== -->
+    <section class="tab-view" id="view-architecture">
+      <div class="arch-diagram-card">
+        <h2 class="section-title" style="justify-content: center; margin-bottom: 0.4rem;">
+          <span>🏛️</span> ASHA Copilot System Architecture
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 700px; margin: 0 auto 1.5rem auto;">
+          End-to-end pipeline: Frontline Capture (Form/Voice/Live) → Clinical NLP Extraction → Common Data Model (CDM) → Schema Mapping Engine → 3 Registers → Offline Sync & Audit Trail.
+        </p>
+
+        <div class="arch-flow-diagram">
+          <div class="arch-node">
+            <div class="arch-node-title">👩‍⚕️ ASHA / Community Health Worker</div>
+            <div class="arch-node-desc">Frontline worker conducting household visits in English, Telugu, or Hindi</div>
+          </div>
+
+          <div class="arch-arrow">↓</div>
+
+          <div class="arch-split-row">
+            <div class="arch-sub-node">
+              <div style="font-size: 1.2rem; margin-bottom: 0.3rem;">🎙️</div>
+              <strong>Voice Studio</strong>
+              <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">Multilingual Web Speech (EN/TE/HI)</div>
+            </div>
+            <div class="arch-sub-node">
+              <div style="font-size: 1.2rem; margin-bottom: 0.3rem;">⚡</div>
+              <strong>Live Autosave</strong>
+              <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">Realtime keystroke buffering</div>
+            </div>
+            <div class="arch-sub-node">
+              <div style="font-size: 1.2rem; margin-bottom: 0.3rem;">📝</div>
+              <strong>Standard Form</strong>
+              <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">High-contrast field inputs</div>
+            </div>
+          </div>
+
+          <div class="arch-arrow">↓</div>
+
+          <div class="arch-node">
+            <div class="arch-node-title">🧠 Entity Extraction & Verification Layer</div>
+            <div class="arch-node-desc">Clinical NLP Entity Parser + Pre-commit Verification Card + Consent Recording</div>
+          </div>
+
+          <div class="arch-arrow">↓</div>
+
+          <div class="arch-node primary">
+            <div class="arch-node-title">🧬 Common Data Model (CDM)</div>
+            <div class="arch-node-desc">Normalized single source-of-truth encounter schema + Data Consistency Engine</div>
+          </div>
+
+          <div class="arch-arrow">↓</div>
+
+          <div class="arch-node">
+            <div class="arch-node-title">⚙️ Schema Mapping Engine</div>
+            <div class="arch-node-desc">Declarative transformation transformers mapping CDM to programme registers</div>
+          </div>
+
+          <div class="arch-arrow">↓</div>
+
+          <div class="arch-split-row">
+            <div class="arch-sub-node" style="border-top: 4px solid #DB2777;">
+              <div style="font-size: 1.2rem; margin-bottom: 0.2rem;">🤰</div>
+              <strong>Maternal Health Record</strong>
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.3rem;">gestation = "20 weeks"</div>
+            </div>
+            <div class="arch-sub-node" style="border-top: 4px solid #4F46E5;">
+              <div style="font-size: 1.2rem; margin-bottom: 0.2rem;">💉</div>
+              <strong>Immunisation Register</strong>
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.3rem;">completed_antigens: [...]</div>
+            </div>
+            <div class="arch-sub-node" style="border-top: 4px solid #059669;">
+              <div style="font-size: 1.2rem; margin-bottom: 0.2rem;">🏠</div>
+              <strong>Household Register</strong>
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.3rem;">pregnant_member = true</div>
+            </div>
+          </div>
+
+          <div class="arch-arrow">↓</div>
+
+          <div class="arch-node">
+            <div class="arch-node-title">📡 Offline Buffer & Eventual Central Cloud Sync</div>
+            <div class="arch-node-desc">IndexedDB / LocalStorage queue with background synchronization to Primary Health Centre</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 7: AUDIT & SECURITY LOGS (RBAC)
+         ==================================================================== -->
+    <section class="tab-view" id="view-audit">
+      <div class="audit-table-card">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title"><span>🛡️</span> System Audit & Governance Log</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+              Tracks all data entry actions, verification signatures, network synchronizations, and role activities for compliance.
+            </p>
+          </div>
+        </div>
+
+        <table class="fields-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">Timestamp</th>
+              <th style="width: 20%;">User & Role</th>
+              <th style="width: 25%;">Action Type</th>
+              <th>Action Details</th>
+            </tr>
+          </thead>
+          <tbody id="auditLogsTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Application Footer & Mandatory Compliance Notice -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="privacy-notice-box">
+        <div class="privacy-icon">🛡️</div>
+        <div>
+          <strong>Safety & Privacy Notice (Kalachakra 2K26 PS-H02 Compliance):</strong><br>
+          This prototype exclusively uses synthetic demo data. No real individual's health information is collected, transmitted, or processed. This application is a workflow prototype designed to demonstrate documentation reduction and does not perform medical diagnosis, prescription, or clinical treatment. Demo Programme Schemas are illustrative representations and do not claim integration with official government databases.
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+        <div>ASHA Copilot 2.0 • "One Worker, Five Systems" Prototype</div>
+        <div>Engineered with Vanilla ES6+ & Python 3 Local Server</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- In-App Deletion Confirmation Modal (Zero-block, Accessible) -->
+  <div class="modal-backdrop" id="deleteModalBackdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.5rem;">⚠️</span>
+          <div>
+            <h3 class="modal-title" id="deleteModalTitle">Confirm Permanent Deletion</h3>
+            <p class="modal-subtitle" id="deleteModalSubtitle">Kalachakra 2K26 Healthcare PS-H02 Storage Action</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCancelDeleteX" title="Cancel">✕</button>
+      </div>
+      <div class="modal-body" id="deleteModalBody">
+        Are you sure you want to permanently delete this profile registration?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-inspect-enc" id="btnCancelDelete">Cancel</button>
+        <button type="button" class="btn-delete-enc" id="btnConfirmDelete" style="padding: 0.6rem 1.4rem; font-size: 0.9rem;">
+          🗑️ Permanently Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL 1: ADD TO HEALTH PROFILE ACTION SHEET (Requirement 10)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="addRecordModal" style="display: none;">
+    <div class="modal-card" style="max-width: 550px;">
+      <div class="modal-header" style="background: #F0FDF4; border-bottom: 1px solid #BBF7D0;">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">➕</span>
+          <div>
+            <h3 class="modal-title" style="color: #166534;">ADD TO HEALTH PROFILE</h3>
+            <p class="modal-subtitle" style="color: #15803D;">Select clinical record type to append without deleting previous history.</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAddRecordModal" style="color: #166534;">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="add-actions-grid">
+          <button type="button" class="add-action-item" id="actNewCheckup">
+            <span class="action-icon">🩺</span>
+            <div class="action-text">
+              <strong>+ NEW CHECK-UP</strong>
+              <span>Comprehensive vitals, examination & lab tests</span>
+            </div>
+          </button>
+
+          <button type="button" class="add-action-item" id="actDiagnosticResult">
+            <span class="action-icon">🔬</span>
+            <div class="action-text">
+              <strong>+ DIAGNOSTIC RESULT</strong>
+              <span>Ultrasound, ECG, or diagnostic imaging</span>
+            </div>
+          </button>
+
+          <button type="button" class="add-action-item" id="actLabReport">
+            <span class="action-icon">🧪</span>
+            <div class="action-text">
+              <strong>+ LAB REPORT</strong>
+              <span>Blood, urine, or biochemistry lab report</span>
+            </div>
+          </button>
+
+          <button type="button" class="add-action-item" id="actClinicalReport">
+            <span class="action-icon">📋</span>
+            <div class="action-text">
+              <strong>+ CLINICAL REPORT</strong>
+              <span>Physician consultation summary</span>
+            </div>
+          </button>
+
+          <button type="button" class="add-action-item" id="actNewHealthFinding">
+            <span class="action-icon">⚠️</span>
+            <div class="action-text">
+              <strong>+ NEW HEALTH FINDING</strong>
+              <span>Undocumented symptom (Awaiting Verification)</span>
+            </div>
+          </button>
+
+          <button type="button" class="add-action-item" id="actFollowUp">
+            <span class="action-icon">📅</span>
+            <div class="action-text">
+              <strong>+ FOLLOW-UP</strong>
+              <span>Schedule periodic visit & set reminder</span>
+            </div>
+          </button>
+
+          <button type="button" class="add-action-item" id="actDocument">
+            <span class="action-icon">📁</span>
+            <div class="action-text">
+              <strong>+ DOCUMENT</strong>
+              <span>Upload PDF, JPG, or PNG verification file</span>
+            </div>
+          </button>
+
+          <button type="button" class="add-action-item" id="actObservation">
+            <span class="action-icon">✍️</span>
+            <div class="action-text">
+              <strong>+ OBSERVATION</strong>
+              <span>Field worker clinical note</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL 2: COMPREHENSIVE CHECK-UP / DIAGNOSTIC FORM (Requirements 11-12)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="checkupFormModal" style="display: none;">
+    <div class="modal-card" style="max-width: 780px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="background: #F8FAFC; border-bottom: 1px solid var(--border-medium);">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">🩺</span>
+          <div>
+            <h3 class="modal-title" style="color: var(--text-main);">NEW CLINICAL CHECK-UP / DIAGNOSTIC RECORD</h3>
+            <p class="modal-subtitle" style="color: var(--text-muted);">Person: <strong id="checkupPersonHeader">Sita Devi (H001)</strong></p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseCheckupModal">✕</button>
+      </div>
+
+      <div class="modal-body" style="overflow-y: auto; padding: 1.5rem; flex: 1;">
+        <!-- 1. General Checkup Info -->
+        <div class="form-section-title">1. Check-up Information</div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Check-up Date *</label>
+            <input type="date" id="checkupDate" class="form-control" value="2026-09-18">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Conducted By *</label>
+            <select id="checkupConductedBy" class="form-control">
+              <option value="Doctor / PHC Medical Officer">Doctor / PHC Medical Officer</option>
+              <option value="ANM Clinical Supervisor">ANM Clinical Supervisor</option>
+              <option value="ASHA Worker">ASHA Worker</option>
+              <option value="Other Healthcare Professional">Other Healthcare Professional</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Initial Status</label>
+            <div style="padding-top: 0.5rem;">
+              <span class="brand-tag-pill" style="background: #FEF3C7; color: #92400E; font-weight: 700;">🟡 Pending Verification</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Vital Measurements & Auto BMI -->
+        <div class="form-section-title">2. Vital Measurements (Auto-Calculates BMI)</div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Blood Pressure (BP)</label>
+            <input type="text" id="checkupBp" class="form-control" value="120/80" placeholder="e.g. 120/80">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Heart Rate (bpm)</label>
+            <input type="number" id="checkupHeartRate" class="form-control" value="74" min="40" max="220">
+          </div>
+          <div class="form-group">
+            <label class="form-label">SpO2 (%)</label>
+            <input type="number" id="checkupSpo2" class="form-control" value="98" min="60" max="100">
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Temperature (°F)</label>
+            <input type="number" id="checkupTemp" class="form-control" value="98.4" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Height (cm)</label>
+            <input type="number" id="checkupHeight" class="form-control" value="160" min="50" max="250">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight (kg)</label>
+            <input type="number" id="checkupWeight" class="form-control" value="56" min="2" max="200">
+          </div>
+        </div>
+
+        <!-- Auto BMI Chip -->
+        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 0.88rem; font-weight: 700; color: #166534;">
+            <span>⚖️ Body Mass Index (BMI):</span>
+            <span id="checkupBmiVal" style="font-size: 1.1rem; margin-left: 0.5rem; color: #047857;">21.9</span>
+            <span id="checkupBmiCategory" style="margin-left: 0.5rem; font-weight: 600; color: #15803D;">(Normal weight)</span>
+          </div>
+          <span style="font-size: 0.76rem; color: #15803D;">Calculated automatically: Weight / Height²</span>
+        </div>
+
+        <!-- 3. Laboratory Tests & Uploads -->
+        <div class="form-section-title">3. Laboratory Tests & Supporting Reports</div>
+        <div class="form-group">
+          <label class="form-label">Blood Test Findings</label>
+          <div style="display: flex; gap: 0.6rem;">
+            <input type="text" id="checkupBloodResult" class="form-control" placeholder="e.g. Hemoglobin 11.4 g/dL, Platelets adequate" value="Hemoglobin 11.4 g/dL">
+            <input type="file" id="checkupBloodFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+            <button type="button" class="btn-inspect-enc" id="btnUploadBloodFile">📁 + Upload Blood Report</button>
+          </div>
+          <span id="checkupBloodFileLabel" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem; display: block;"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Urine Test Findings</label>
+          <div style="display: flex; gap: 0.6rem;">
+            <input type="text" id="checkupUrineResult" class="form-control" placeholder="e.g. Albumin absent, sugar Nil" value="Albumin absent, sugar Nil">
+            <input type="file" id="checkupUrineFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+            <button type="button" class="btn-inspect-enc" id="btnUploadUrineFile">📁 + Upload Urine Report</button>
+          </div>
+          <span id="checkupUrineFileLabel" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem; display: block;"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Other Laboratory / Diagnostic Test</label>
+          <div style="display: flex; gap: 0.6rem;">
+            <input type="text" id="checkupOtherResult" class="form-control" placeholder="e.g. Fasting Glucose 88 mg/dL">
+            <input type="file" id="checkupOtherFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+            <button type="button" class="btn-inspect-enc" id="btnUploadOtherFile">📁 + Upload Report</button>
+          </div>
+          <span id="checkupOtherFileLabel" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem; display: block;"></span>
+        </div>
+
+        <!-- 4. Physical Examination -->
+        <div class="form-section-title">4. Physical Examination</div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Lungs</label>
+            <select id="examLungs" class="form-control">
+              <option value="Normal">Normal (Clear)</option>
+              <option value="Finding">Finding</option>
+              <option value="Not Examined">Not Examined</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Skin</label>
+            <select id="examSkin" class="form-control">
+              <option value="Normal">Normal</option>
+              <option value="Finding">Finding (Rash/Pallor)</option>
+              <option value="Not Examined">Not Examined</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Throat</label>
+            <select id="examThroat" class="form-control">
+              <option value="Normal">Normal</option>
+              <option value="Finding">Finding (Congestion)</option>
+              <option value="Not Examined">Not Examined</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Eyes</label>
+            <select id="examEyes" class="form-control">
+              <option value="Normal">Normal (No Pallor)</option>
+              <option value="Finding">Finding (Pallor)</option>
+              <option value="Not Examined">Not Examined</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ears</label>
+            <select id="examEars" class="form-control">
+              <option value="Normal">Normal</option>
+              <option value="Finding">Finding</option>
+              <option value="Not Examined">Not Examined</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Other Physical Findings</label>
+            <input type="text" id="examOther" class="form-control" placeholder="e.g. Fundal height 20w">
+          </div>
+        </div>
+
+        <!-- 5. Clinical Observations -->
+        <div class="form-section-title">5. Clinical Observations & Notes</div>
+        <div class="form-group">
+          <textarea id="checkupObservations" class="form-control" rows="2" placeholder="Enter clinical assessment notes, counseling given, nutritional advice..."></textarea>
+        </div>
+
+        <!-- 6. New / Previously Undocumented Findings (Requirement 12) -->
+        <div class="form-section-title">6. New / Previously Undocumented Health Findings</div>
+        <div style="background: #FEFCE8; border: 1.5px dashed #F59E0B; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+          <label class="form-label" style="color: #92400E; font-weight: 800;">
+            Reported Finding (Labeled: "Reported — Awaiting Verification"):
+          </label>
+          <input type="text" id="checkupNewFinding" class="form-control" placeholder="e.g. Mild pedal edema noted in evenings, morning nausea">
+          <div style="font-size: 0.76rem; color: #B45309; margin-top: 0.4rem;">
+            ⚠️ <strong>Safety Rule:</strong> Entering a finding here does NOT automatically confirm a disease. It will be labeled <em>"Reported — Awaiting Verification"</em> until reviewed and approved by an authorized doctor.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background: #F8FAFC; border-top: 1px solid var(--border-medium); padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelCheckup">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSaveCheckup" style="background: var(--primary); color: white;">
+          💾 SAVE CHECK-UP RECORD
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL 3: IN-APP DOCUMENT VIEWER & DOWNLOAD (Requirement 15)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="documentViewerModal" style="display: none;">
+    <div class="modal-card" style="max-width: 720px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="background: #F8FAFC; border-bottom: 1px solid var(--border-medium);">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">📄</span>
+          <div>
+            <h3 class="modal-title" id="docViewerTitle">Clinical Report Viewer</h3>
+            <p class="modal-subtitle" id="docViewerMeta">Category • Uploaded date</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseDocViewer">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1rem; overflow-y: auto; text-align: center; flex: 1; background: #E2E8F0;">
+        <div id="docViewerContentContainer" style="display: inline-block; box-shadow: var(--shadow-lg); background: white; border-radius: 6px; overflow: hidden; max-width: 100%;">
+          <img id="docViewerImage" src="" alt="Report Document Preview" style="max-width: 100%; height: auto; display: block;">
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background: #F8FAFC; border-top: 1px solid var(--border-medium); padding: 0.85rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div id="docViewerStatusChip" class="sync-badge synced">✓ DOCTOR VERIFIED</div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" class="btn-inspect-enc" id="btnCloseDocViewerBtn">Close</button>
+          <button type="button" class="btn-hero-primary" id="btnDownloadCurrentDoc" style="background: var(--primary); color: white;">
+            📥 DOWNLOAD REPORT
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL 4: DOCTOR VERIFICATION WORKFLOW (Requirement 13)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="doctorVerificationModal" style="display: none;">
+    <div class="modal-card" style="max-width: 550px;">
+      <div class="modal-header" style="background: #EFF6FF; border-bottom: 1px solid #BFDBFE;">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">👨‍⚕️</span>
+          <div>
+            <h3 class="modal-title" style="color: #1E40AF;">Physician Clinical Verification</h3>
+            <p class="modal-subtitle" style="color: #2563EB;">Review reported finding or laboratory report</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseDoctorVerifModal" style="color: #1E40AF;">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Item Under Review:</label>
+          <div id="verifTargetTitle" style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-top: 0.2rem;"></div>
+          <div id="verifTargetMeta" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reviewing Physician Name</label>
+          <input type="text" id="verifDoctorName" class="form-control" value="Dr. K. V. Sharma (MO-PHC-02)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Verification Notes / Clinical Assessment</label>
+          <textarea id="verifDoctorNotes" class="form-control" rows="3" placeholder="Enter clinical assessment, diagnostic confirmation notes, or clarification required..."></textarea>
+        </div>
+
+        <div style="font-size: 0.76rem; color: var(--text-muted); background: #F8FAFC; border: 1px solid var(--border-subtle); padding: 0.6rem; border-radius: var(--radius-sm);">
+          Source Attribution: <strong style="color: #0D9488;">DOCTOR VERIFIED</strong> signature will be timestamped to the audit log and person health timeline.
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background: #F8FAFC; border-top: 1px solid var(--border-subtle); padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem; flex-wrap: wrap;">
+        <button type="button" class="btn-inspect-enc" id="btnVerifClarify" style="border-color: #F59E0B; color: #D97706;">
+          Request Clarification
+        </button>
+        <button type="button" class="btn-delete-enc" id="btnVerifReject">
+          ✕ Reject
+        </button>
+        <button type="button" class="btn-hero-primary" id="btnVerifApprove" style="background: #059669; color: white;">
+          ✓ Verify & Approve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL 5: ASHA USER MANAGEMENT & LOGIN (Requirements 16-18)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="userAuthModal" style="display: none;">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header" style="background: #F8FAFC; border-bottom: 1px solid var(--border-medium);">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">👥</span>
+          <div>
+            <h3 class="modal-title" style="color: var(--text-main);">ASHA User Accounts & Authentication</h3>
+            <p class="modal-subtitle" style="color: var(--text-muted);">Multiple ASHA logins and record attribution management</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseUserAuthModal">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem;">
+        <!-- Tabs for Switch vs Create -->
+        <div class="btn-toggle-group" style="margin-bottom: 1.25rem; width: 100%;">
+          <button type="button" class="btn-toggle-item active" id="tabUserSwitchBtn" style="flex: 1;">
+            👤 Switch Active User
+          </button>
+          <button type="button" class="btn-toggle-item" id="tabUserCreateBtn" style="flex: 1;">
+            ➕ + Create New User
+          </button>
+        </div>
+
+        <!-- Panel A: Switch Active User -->
+        <div id="panelUserSwitch">
+          <label class="form-label">Select Active Healthcare Worker Account:</label>
+          <div id="usersListContainer" style="display: flex; flex-direction: column; gap: 0.6rem; max-height: 260px; overflow-y: auto; margin-bottom: 1rem;">
+            <!-- Populated dynamically -->
+          </div>
+
+          <div style="background: #F1F5F9; border-radius: var(--radius-sm); padding: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+            💡 Switching accounts updates session attribution for all newly created encounters, uploaded documents, and check-up records.
+          </div>
+        </div>
+
+        <!-- Panel B: Create New User Account -->
+        <div id="panelUserCreate" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="newFullName" class="form-control" placeholder="e.g. Sunita Verma">
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Username *</label>
+              <input type="text" id="newUsername" class="form-control" placeholder="e.g. sunita.v">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone (Synthetic)</label>
+              <input type="text" id="newPhone" class="form-control" placeholder="98480xxxxx">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Password *</label>
+              <input type="password" id="newPassword" class="form-control" value="password123">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select id="newRole" class="form-control">
+                <option value="ASHA">ASHA Worker (Field Level)</option>
+                <option value="ANM">ANM Clinical Supervisor</option>
+                <option value="ADMIN">Medical Officer / Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Assigned Area / Sub-Centre</label>
+            <input type="text" id="newArea" class="form-control" placeholder="e.g. Rampur Sector 3">
+          </div>
+
+          <button type="button" class="btn-hero-primary" id="btnSubmitCreateUser" style="width: 100%; justify-content: center; background: var(--primary); color: white; margin-top: 0.5rem;">
+            ✓ CREATE ACCOUNT & ACTIVATE
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODALS: FAMILY REPORT, LIFE EVENTS & TARGET SYSTEM (Requirements 2-26)
+       ==================================================================== -->
+
+  <!-- Modal F1: Register New Family -->
+  <div class="modal-backdrop" id="registerFamilyModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">🏠</span>
+          <div>
+            <h3 class="modal-title">Register New Family Household</h3>
+            <p class="modal-subtitle">Create a community family file linked to ASHA surveillance</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseRegisterFamilyModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Family Head Name *</label>
+          <input type="text" id="regFamilyHeadName" class="form-control" placeholder="e.g. Ramesh Chandra">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">House / House Number *</label>
+            <input type="text" id="regFamilyHouseNumber" class="form-control" placeholder="e.g. H-045">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Family ID</label>
+            <input type="text" id="regFamilyId" class="form-control" placeholder="Auto (e.g. F045)" readonly>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address / Village Locality *</label>
+          <input type="text" id="regFamilyAddress" class="form-control" placeholder="e.g. Sector 3, Rampur Village">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned ASHA Worker</label>
+          <select id="regFamilyAssignedAsha" class="form-control">
+            <option value="ASHA001">ASHA001 - Sita Rao (Sector 4)</option>
+            <option value="ASHA002">ASHA002 - Priya Kumar (Sector 2)</option>
+            <option value="ASHA003">ASHA003 - Lakshmi Devi (Ward 3)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelRegisterFamily">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitRegisterFamily" style="background: var(--primary); color: white;">
+          ✓ Register Family
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F2: Add Family Member -->
+  <div class="modal-backdrop" id="addFamilyMemberModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">👤</span>
+          <div>
+            <h3 class="modal-title">Add Family Member</h3>
+            <p class="modal-subtitle" id="addMemberFamilySubtitle">Family F042 • Member census auto-updates</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAddFamilyMemberModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" id="familyMemberName" class="form-control" placeholder="e.g. Geeta Devi">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Gender *</label>
+            <select id="familyMemberGender" class="form-control">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Age (Years) *</label>
+            <input type="number" id="familyMemberAge" class="form-control" placeholder="e.g. 28" min="0" max="120">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Family Role / Relation</label>
+            <input type="text" id="familyMemberRole" class="form-control" placeholder="e.g. Daughter, Brother, Son">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone (Synthetic)</label>
+            <input type="text" id="familyMemberPhone" class="form-control" placeholder="98480xxxxx">
+          </div>
+        </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.5rem; background: #F8FAFC; padding: 0.75rem; border-radius: var(--radius-sm);">
+          <input type="checkbox" id="familyMemberIsPregnant" style="width: 1.15rem; height: 1.15rem;">
+          <label for="familyMemberIsPregnant" style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin: 0; cursor: pointer;">
+            🤰 Member is currently pregnant (Enables Antenatal Surveillance)
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelAddFamilyMember">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitAddFamilyMember" style="background: var(--primary); color: white;">
+          ✓ Save Member & Register Profile
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F3: Add Scheme & Benefit -->
+  <div class="modal-backdrop" id="addSchemeModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">📑</span>
+          <div>
+            <h3 class="modal-title">Enroll in Government Health Scheme</h3>
+            <p class="modal-subtitle">Family-level or individual beneficiary scheme mapping</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAddSchemeModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Scheme Name *</label>
+          <input type="text" id="schemeName" class="form-control" placeholder="e.g. Ayushman Bharat PM-JAY, PMMVY, JSY">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Eligibility</label>
+            <select id="schemeEligibility" class="form-control">
+              <option value="Eligible">Eligible</option>
+              <option value="Not Eligible">Not Eligible</option>
+              <option value="Under Review">Under Review</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Eligible For *</label>
+            <select id="schemeEligibleFor" class="form-control">
+              <option value="Family">Entire Family</option>
+              <option value="Individual">Specific Individual</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="schemePersonSelectGroup" style="display: none;">
+          <label class="form-label">Select Person</label>
+          <select id="schemeBeneficiaryPersonSelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="schemeStatus" class="form-control">
+              <option value="Pending">Pending</option>
+              <option value="Applied">Applied</option>
+              <option value="Approved">Approved</option>
+              <option value="Provided">Provided</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" id="schemeDate" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes / Documentation Details</label>
+          <textarea id="schemeNotes" class="form-control" rows="2" placeholder="Application reference number, sanction status..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelAddScheme">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitAddScheme" style="background: var(--primary); color: white;">
+          ✓ Save Scheme Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F4: Add Essential Health Supply -->
+  <div class="modal-backdrop" id="addSupplyModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">📦</span>
+          <div>
+            <h3 class="modal-title">Record Essential Health Supply</h3>
+            <p class="modal-subtitle">Frontline community supplies (ORS, IFA, Zinc, Disinfection)</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAddSupplyModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Supply Item *</label>
+            <select id="supplyName" class="form-control">
+              <option value="Oral Rehydration Salts (ORS) Sachets">Oral Rehydration Salts (ORS) Sachets</option>
+              <option value="Iron & Folic Acid (IFA) Tablets">Iron & Folic Acid (IFA) Tablets</option>
+              <option value="Zinc Sulfate Tablets (20mg)">Zinc Sulfate Tablets (20mg)</option>
+              <option value="Chlorine Water Purification Tablets">Chlorine Water Purification Tablets</option>
+              <option value="Sanitary Napkin Pack (Suvidha)">Sanitary Napkin Pack (Suvidha)</option>
+              <option value="Vitamin A Oral Solution">Vitamin A Oral Solution</option>
+              <option value="Condoms / Contraceptive Buffer">Condoms / Contraceptive Buffer</option>
+              <option value="Other Essential Health Supply">Other Essential Health Supply</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity Provided *</label>
+            <input type="number" id="supplyQuantity" class="form-control" value="5" min="1">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Provided To</label>
+            <select id="supplyProvidedTo" class="form-control">
+              <option value="Family">Family Buffer</option>
+              <option value="Individual">Specific Individual</option>
+            </select>
+          </div>
+          <div class="form-group" id="supplyPersonSelectGroup" style="display: none;">
+            <label class="form-label">Select Beneficiary</label>
+            <select id="supplyBeneficiaryPersonSelect" class="form-control">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date Provided</label>
+          <input type="date" id="supplyDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Related Programme / Scheme (Optional)</label>
+          <select id="supplyRelatedProgrammeSelect" class="form-control">
+            <option value="">-- General Community Buffer --</option>
+            <option value="Anaemia Mukt Bharat">Anaemia Mukt Bharat (IFA / De-worming)</option>
+            <option value="PMSMA">Pradhan Mantri Surakshit Matritva Abhiyan</option>
+            <option value="POSHAN 2.0">Saksham Anganwadi & POSHAN 2.0</option>
+            <option value="Family Planning Programme">Family Planning Programme (Condoms / Pills)</option>
+            <option value="Mission Parivar Vikas">Mission Parivar Vikas</option>
+            <option value="Ayushman Arogya Mandir">Ayushman Arogya Mandir / CPHC</option>
+            <option value="Diarrhea Control">National Diarrhea Control (ORS & Zinc)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <input type="text" id="supplyNotes" class="form-control" placeholder="e.g. Diarrheal prevention batch, prenatal course">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelAddSupply">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitAddSupply" style="background: var(--primary); color: white;">
+          ✓ Save Supply Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F5: Add Medicine Provided -->
+  <div class="modal-backdrop" id="addMedicineModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">💊</span>
+          <div>
+            <h3 class="modal-title">Record Medicine Provided</h3>
+            <p class="modal-subtitle">Authorized dispensed medication documentation (Non-prescriptive)</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAddMedicineModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="alert-box alert-info" style="margin-bottom: 1rem; font-size: 0.8rem;">
+          ℹ️ <strong>Clinical Safety Rule:</strong> Records medicines documented by an authorized healthcare provider or standing ASHA kit protocol. AI does not independently prescribe.
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Medicine Name *</label>
+            <input type="text" id="medName" class="form-control" placeholder="e.g. Paracetamol 500mg, Calcium D3">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity *</label>
+            <input type="number" id="medQuantity" class="form-control" value="10" min="1">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Recipient *</label>
+            <select id="medRecipientSelect" class="form-control">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" id="medDate" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Related Programme / Scheme (Optional)</label>
+          <select id="medRelatedProgrammeSelect" class="form-control">
+            <option value="">-- General Dispensary / Not Programme Linked --</option>
+            <option value="Anaemia Mukt Bharat">Anaemia Mukt Bharat (IFA / Calcium)</option>
+            <option value="PMSMA">Pradhan Mantri Surakshit Matritva Abhiyan</option>
+            <option value="NP-NCD">NP-NCD (Hypertension / Diabetes)</option>
+            <option value="NTEP">National TB Elimination Programme (DOTS)</option>
+            <option value="Ayushman Arogya Mandir">Ayushman Arogya Mandir EDL</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes / Instructions</label>
+          <input type="text" id="medNotes" class="form-control" placeholder="Dosage instruction or standing clinical protocol...">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelAddMedicine">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitAddMedicine" style="background: var(--primary); color: white;">
+          ✓ Save Medicine Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F6: Report Birth -->
+  <div class="modal-backdrop" id="reportBirthModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">👶</span>
+          <div>
+            <h3 class="modal-title">Report Vital Event: Birth</h3>
+            <p class="modal-subtitle">Registers newborn into family roster and immunization queue</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseReportBirthModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Mother (Family Member) *</label>
+          <select id="birthMotherSelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Child Name</label>
+            <input type="text" id="birthChildName" class="form-control" placeholder="e.g. Baby Aarav">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender *</label>
+            <select id="birthGender" class="form-control">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Date of Birth *</label>
+            <input type="date" id="birthDob" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Place of Birth</label>
+            <input type="text" id="birthPlace" class="form-control" placeholder="e.g. PHC Rampur / CHC">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes / Birth Registration Details</label>
+          <textarea id="birthNotes" class="form-control" rows="2" placeholder="Birth weight, initial vaccine doses administered..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelReportBirth">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitReportBirth" style="background: var(--primary); color: white;">
+          ✓ Save Birth & Add to Family
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F7: Report Death -->
+  <div class="modal-backdrop" id="reportDeathModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">🕊️</span>
+          <div>
+            <h3 class="modal-title">Report Vital Event: Death</h3>
+            <p class="modal-subtitle">Historical clinical profile is permanently preserved</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseReportDeathModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="alert-box alert-warning" style="margin-bottom: 1rem; font-size: 0.8rem;">
+          ⚠️ <strong>System Safety Guarantee:</strong> The person is marked as deceased in family records, but their historical profile is NEVER deleted from the health registry.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Family Member *</label>
+          <select id="deathPersonSelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Date of Death *</label>
+            <input type="date" id="deathDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cause of Death</label>
+            <input type="text" id="deathCause" class="form-control" placeholder="Leave empty for 'Cause not recorded'">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes / Attestation</label>
+          <textarea id="deathNotes" class="form-control" rows="2" placeholder="Death notification details, reporting source..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelReportDeath">Cancel</button>
+        <button type="button" class="btn-delete-enc" id="btnSubmitReportDeath">
+          ✓ Save Death Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F8: Report Health Event / Outbreak -->
+  <div class="modal-backdrop" id="reportHealthEventModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">🚨</span>
+          <div>
+            <h3 class="modal-title">Report Health Event / Cluster</h3>
+            <p class="modal-subtitle">Frontline surveillance flag (Labeled "Reported health event")</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseReportHealthEventModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="alert-box alert-info" style="margin-bottom: 1rem; font-size: 0.8rem;">
+          ℹ️ <strong>Non-Diagnostic Flag:</strong> This logs a frontline observation for Medical Officer review without declaring an official epidemic outbreak.
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Reported Symptoms *</label>
+            <input type="text" id="eventSymptoms" class="form-control" placeholder="e.g. Acute watery diarrhea, fever & rash">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number Affected *</label>
+            <input type="number" id="eventAffectedCount" class="form-control" value="2" min="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date Observed</label>
+          <input type="date" id="eventDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observations & Action Taken</label>
+          <textarea id="eventDescription" class="form-control" rows="3" placeholder="Describe symptoms, water source sanitation, initial ORS provided, PHC notified..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelReportHealthEvent">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitReportHealthEvent" style="background: #D97706; color: white;">
+          ✓ Submit Health Event Flag
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F9: Programme Report -->
+  <div class="modal-backdrop" id="reportProgrammeModal" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">📋</span>
+          <div>
+            <h3 class="modal-title">Record Programme Activity</h3>
+            <p class="modal-subtitle">Frontline community campaign activity documentation</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseReportProgrammeModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Programme Type *</label>
+            <select id="progType" class="form-control">
+              <option value="Village Health, Sanitation & Nutrition Day (VHSND)">VHSND Session</option>
+              <option value="Routine Immunisation Outreach Camp">Routine Immunisation Camp</option>
+              <option value="NCD Screening Drive (Hypertension/Diabetes)">NCD Screening Drive</option>
+              <option value="POSHAN Abhiyaan Nutrition Workshop">POSHAN Abhiyaan Workshop</option>
+              <option value="National Deworming Day (NDD)">National Deworming Day</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date Conducted</label>
+            <input type="date" id="progDate" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Activity Details *</label>
+          <textarea id="progDetails" class="form-control" rows="2" placeholder="Services rendered to this family (weights, immunization, nutrition counseling)..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes / Follow-up Needed</label>
+          <input type="text" id="progNotes" class="form-control" placeholder="e.g. Next session scheduled for next month">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelReportProgramme">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitReportProgramme" style="background: var(--primary); color: white;">
+          ✓ Save Programme Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F10: Edit ASHA Target -->
+  <div class="modal-backdrop" id="editTargetModal" style="display: none;">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">🎯</span>
+          <div>
+            <h3 class="modal-title">Edit Household Target</h3>
+            <p class="modal-subtitle">Supervisor & Admin target allocation</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseEditTargetModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Allocated Household Target *</label>
+          <input type="number" id="targetAllocatedInput" class="form-control" value="45" min="1" max="500">
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">
+          Remaining households and completion percentage will recalculate automatically.
+        </p>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelEditTarget">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitEditTarget" style="background: var(--primary); color: white;">
+          ✓ Save New Target
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal F11: Assign Family to ASHA -->
+  <div class="modal-backdrop" id="assignFamilyModal" style="display: none;">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">👥</span>
+          <div>
+            <h3 class="modal-title">Assign Household Family</h3>
+            <p class="modal-subtitle">Allocate family surveillance to a frontline worker</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAssignFamilyModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Select Family *</label>
+          <select id="assignFamilySelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assign to ASHA Worker *</label>
+          <select id="assignAshaSelect" class="form-control">
+            <option value="ASHA001">ASHA001 - Sita Rao (Sector 4)</option>
+            <option value="ASHA002">ASHA002 - Priya Kumar (Sector 2)</option>
+            <option value="ASHA003">ASHA003 - Lakshmi Devi (Ward 3)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelAssignFamily">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitAssignFamily" style="background: var(--primary); color: white;">
+          ✓ Save Assignment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal P1: Dedicated Programme Profile Details Modal -->
+  <div class="modal-backdrop" id="programmeDetailModal" style="display: none;">
+    <div class="modal-card" style="max-width: 780px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.5rem;" id="progDetailIcon">🏛️</span>
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <h3 class="modal-title" id="progDetailName">Pradhan Mantri Matru Vandana Yojana</h3>
+              <span class="brand-tag-pill" id="progDetailAbbr" style="background: #8B5CF6; color: white;">PMMVY</span>
+            </div>
+            <p class="modal-subtitle" id="progDetailCategory" style="color: #6D28D9; font-weight: 700;">Maternal & Newborn Health</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseProgrammeDetailModal">✕</button>
+      </div>
+      <div class="modal-body" id="progDetailBody" style="padding: 1.25rem; overflow-y: auto; flex: 1;">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCloseProgDetailFooter">Close</button>
+        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+          <button type="button" class="btn-inspect-enc" id="btnProgDetailAddReport" style="border-color: #8B5CF6; color: #6D28D9; font-weight: 700;">
+            <span>📋</span> + Add Report
+          </button>
+          <button type="button" class="btn-hero-primary" id="btnProgDetailCheckEligibility" style="background: #8B5CF6; color: white;">
+            <span>✓</span> Check Eligibility / Assign
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal P2: Programme Eligibility & Assignment Modal -->
+  <div class="modal-backdrop" id="programmeEligibilityModal" style="display: none;">
+    <div class="modal-card" style="max-width: 580px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">📑</span>
+          <div>
+            <h3 class="modal-title">Record Programme Eligibility</h3>
+            <p class="modal-subtitle">Link national public health scheme to person or household</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseProgrammeEligibilityModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem; overflow-y: auto; flex: 1;">
+        <div class="diagnostic-warning-banner" style="margin-bottom: 1rem; background: #FFFBEB; border-color: #FDE68A;">
+          <div style="font-size: 0.8rem; color: #92400E;">
+            <strong>⚠️ Administrative Non-Diagnostic Guard:</strong> Frontline workers document eligibility reported and under review. Final scheme benefit approval is subject to competent official government authority.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Health Programme / Scheme *</label>
+          <select id="eligibilityProgrammeSelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Beneficiary Scope *</label>
+          <div style="display: flex; gap: 1.5rem; margin-top: 0.35rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700; cursor: pointer;">
+              <input type="radio" name="eligibilityTargetType" value="individual" checked id="radioEligIndividual">
+              Individual Beneficiary
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700; cursor: pointer;">
+              <input type="radio" name="eligibilityTargetType" value="family" id="radioEligFamily">
+              Entire Household / Family
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="eligibilityPersonGroup">
+          <label class="form-label">Select Person *</label>
+          <select id="eligibilityPersonSelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group" id="eligibilityFamilyGroup" style="display: none;">
+          <label class="form-label">Select Family *</label>
+          <select id="eligibilityFamilySelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Eligibility Status *</label>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.35rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+              <input type="radio" name="eligibilityStatusRadio" value="Eligible" checked>
+              <span class="census-pill" style="background: #DCFCE7; color: #166534; font-weight: 700;">✓ Eligible</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+              <input type="radio" name="eligibilityStatusRadio" value="Under Review">
+              <span class="census-pill" style="background: #FEF9C3; color: #854D0E; font-weight: 700;">🟡 Under Review</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+              <input type="radio" name="eligibilityStatusRadio" value="Not Eligible">
+              <span class="census-pill" style="background: #FEE2E2; color: #991B1B; font-weight: 700;">✕ Not Eligible</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Verification Lifecycle *</label>
+          <select id="eligibilityVerificationStatusSelect" class="form-control">
+            <option value="Reported">Reported (ASHA Field Entry)</option>
+            <option value="Under Review" selected>Under Review (ANM / Supervisor Review)</option>
+            <option value="Verified">Verified (PHC Medical Officer Approved)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason / Justification / Observations</label>
+          <textarea id="eligibilityNotesInput" class="form-control" rows="2" placeholder="e.g. Registered during second ANC. Low income household. Documents submitted for review."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Supporting Document Proof</label>
+          <input type="text" id="eligibilityDocInput" class="form-control" placeholder="e.g. MCP Card, Aadhaar Card, Golden Health Card" value="MCP Card / Verification Slip">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelProgrammeEligibility">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitProgrammeEligibility" style="background: #8B5CF6; color: white;">
+          ✓ Save Eligibility Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal P3: Programme Report Submission Modal -->
+  <div class="modal-backdrop" id="addProgrammeReportModal" style="display: none;">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">📋</span>
+          <div>
+            <h3 class="modal-title">Submit Programme Activity Report</h3>
+            <p class="modal-subtitle">Log scheme encounter, camp attendance, or nutrition review</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAddProgrammeReportModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Select Programme *</label>
+          <select id="reportProgProgrammeSelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Beneficiary / Household *</label>
+          <select id="reportProgTargetSelect" class="form-control">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Report Activity Type *</label>
+          <select id="reportProgTypeSelect" class="form-control">
+            <option value="HOME_VISIT">Home Visit & Monitoring</option>
+            <option value="SPECIALIST_ANC">Specialist ANC / Clinic (PMSMA)</option>
+            <option value="NUTRITION_ROSTER">Take-Home Ration / Supplementary Nutrition (POSHAN)</option>
+            <option value="DRUG_ADHERENCE">Drug Adherence / DOTS Follow-up (NTEP)</option>
+            <option value="CAMP_ATTENDANCE">Community Health Camp / VHSND</option>
+            <option value="OTHER">General Programme Follow-up</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Report Title *</label>
+          <input type="text" id="reportProgTitleInput" class="form-control" placeholder="e.g. 2nd Trimester Benefit Verification" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Report Details & Observations *</label>
+          <textarea id="reportProgDetailsInput" class="form-control" rows="3" placeholder="Enter findings, adherence status, or services provided..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Activity *</label>
+          <input type="date" id="reportProgDateInput" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelAddProgrammeReport">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitAddProgrammeReport" style="background: #8B5CF6; color: white;">
+          ✓ Submit Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal P4: Admin Programme Management Modal -->
+  <div class="modal-backdrop" id="adminProgrammeModal" style="display: none;">
+    <div class="modal-card" style="max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span style="font-size: 1.4rem;">⚙️</span>
+          <div>
+            <h3 class="modal-title">Admin: Manage Public Health Programme</h3>
+            <p class="modal-subtitle">Configure scheme definition, criteria, and follow-up rules</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseAdminProgrammeModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem; overflow-y: auto; flex: 1;">
+        <div class="form-group">
+          <label class="form-label">Programme ID / Code *</label>
+          <input type="text" id="adminProgIdInput" class="form-control" placeholder="e.g. PMMVY-V2, STATE-SCHEME-01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Abbreviation *</label>
+          <input type="text" id="adminProgAbbrInput" class="form-control" placeholder="e.g. PMMVY" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Programme Full Name *</label>
+          <input type="text" id="adminProgNameInput" class="form-control" placeholder="Full official scheme title" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select id="adminProgCategorySelect" class="form-control">
+            <option value="Maternal & Newborn Health">Maternal & Newborn Health</option>
+            <option value="Child Health">Child Health</option>
+            <option value="Communicable Diseases">Communicable Diseases</option>
+            <option value="Non-Communicable Diseases">Non-Communicable Diseases</option>
+            <option value="Primary Healthcare">Primary Healthcare</option>
+            <option value="Family Planning & Reproductive Health">Family Planning & Reproductive Health</option>
+            <option value="Adolescent Health">Adolescent Health</option>
+            <option value="Nutrition">Nutrition</option>
+            <option value="Special Disease Programmes">Special Disease Programmes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Short Description *</label>
+          <textarea id="adminProgDescInput" class="form-control" rows="2" placeholder="Brief summary of scheme goals..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Eligibility Criteria (one per line)</label>
+          <textarea id="adminProgCriteriaInput" class="form-control" rows="2" placeholder="Criterion 1&#10;Criterion 2"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Benefits / Services (one per line)</label>
+          <textarea id="adminProgBenefitsInput" class="form-control" rows="2" placeholder="Benefit 1&#10;Benefit 2"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Follow-up Interval (Days)</label>
+          <input type="number" id="adminProgFollowupInput" class="form-control" value="30" min="1" max="365">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <button type="button" class="btn-inspect-enc" id="btnCancelAdminProgramme">Cancel</button>
+        <button type="button" class="btn-hero-primary" id="btnSubmitAdminProgramme" style="background: #8B5CF6; color: white;">
+          ✓ Save Definition
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Script Bundle -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
